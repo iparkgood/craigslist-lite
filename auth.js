@@ -1,4 +1,4 @@
-import { BASE_URL, FIRST_PATH, COHORT_NAME, renderPosts } from "./app.js";
+import { BASE_URL, FIRST_PATH, COHORT_NAME, initApp } from "./app.js";
 
 export async function registerUser({ username, password }) {
   const url = `${BASE_URL}${FIRST_PATH}${COHORT_NAME}/users/register`;
@@ -20,7 +20,7 @@ export async function registerUser({ username, password }) {
 
     if (result.error) {
       window.authState.currentError = result.error.message;
-      return;
+      throw Error(result.error.message);
     }
 
     localStorage.setItem("token", result.data.token);
@@ -28,14 +28,16 @@ export async function registerUser({ username, password }) {
 
     window.authState.currentUser = username;
     window.authState.currentState = "login";
-    window.authState.currentUserObj = updateUserObj();
+    window.authState.currentError = null;
+    updateUserObj();
 
-    renderLogInOutBtn();
-    renderPosts();
+    initApp();
 
     return result;
   } catch (error) {
-    console.error(error);
+    $("#error-message").addClass("active");
+    $("#error-message").text(error);
+    return false;
   }
 }
 
@@ -59,7 +61,7 @@ export async function loginUser({ username, password }) {
 
     if (result.error) {
       window.authState.currentError = result.error.message;
-      return;
+      throw Error(result.error.message);
     }
 
     localStorage.setItem("token", result.data.token);
@@ -67,14 +69,16 @@ export async function loginUser({ username, password }) {
 
     window.authState.currentUser = username;
     window.authState.currentState = "login";
+    window.authState.currentError = null;
     updateUserObj();
 
-    renderLogInOutBtn();
-    renderPosts();
+    initApp();
 
     return result;
   } catch (error) {
-    console.error(error);
+    $("#error-message").addClass("active");
+    $("#error-message").text(error);
+    return false;
   }
 }
 
@@ -91,7 +95,7 @@ export function isLoggedIn() {
 export function renderLogInOutBtn() {
   $("#header-button").empty();
 
-  if (window.authState.currentState === "login") {
+  if (isLoggedIn()) {
     const btnEl = `<button id="log-out">LOG OUT</button>`;
     $("#header-button").append(btnEl);
 
@@ -106,10 +110,9 @@ export function renderLogInOutBtn() {
         window.authState.currentUserObj = updateUserObj();
         window.authState.currentError = null;
 
-        renderLogInOutBtn();
-        renderPosts();
+        initApp();
       });
-  } else if (window.authState.currentState === "logout") {
+  } else if (!isLoggedIn()) {
     const btnEl = `<button id="log-in">LOG IN</button><button id="sign-up">SIGN UP</button>`;
     $("#header-button").append(btnEl);
 
@@ -117,24 +120,56 @@ export function renderLogInOutBtn() {
       $("#log-modal-title").text("Log in");
       $("#log-modal").addClass("open");
       $("#modal-button").text("Log in");
+
+      $("#modal-button").off().on("click", async function (event) {
+        event.preventDefault();
+
+        const username = $("#username").val();
+        const password = $("#password").val();
+        let result = true;
+
+        result = await loginUser({ username, password });
+
+        $("#log-form").trigger("reset");
+
+        if (result) {
+          $(".modal").removeClass("open");
+        }
+      });
     });
-    
+
     $("#sign-up").click(function () {
       $("#log-modal-title").text("Sign up");
       $("#log-modal").addClass("open");
       $("#modal-button").text("Sign up");
+
+      $("#modal-button").off().on("click", async function (event) {
+        event.preventDefault();
+
+        const username = $("#username").val();
+        const password = $("#password").val();
+        let result = true;
+
+        result = await registerUser({ username, password });
+
+        $("#log-form").trigger("reset");
+
+        if (result) {
+          $(".modal").removeClass("open");
+        }
+      });
     });
   }
 }
 
-async function fetchMe(token) {
+export async function fetchMe(token) {
   try {
     const url = `${BASE_URL}${FIRST_PATH}${COHORT_NAME}/users/me`;
 
     const response = await fetch(url, {
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
       },
     });
 

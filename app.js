@@ -1,9 +1,8 @@
 import {
-  registerUser,
-  loginUser,
   isLoggedIn,
   renderLogInOutBtn,
   updateUserObj,
+  fetchMe,
 } from "./auth.js";
 
 export const BASE_URL = "https://strangers-things.herokuapp.com";
@@ -17,28 +16,34 @@ window.authState = {
   currentError: null,
 };
 
-renderLogInOutBtn();
-renderPosts();
+let searchState = {
+  allPosts: [],
+  searchTerm: "",
+};
+
+let postId = null;
+
+initApp();
+
+export function initApp() {
+  renderLogInOutBtn();
+
+  getPosts().then(function (result) {
+    searchState.allPosts = result.data.posts;
+    renderPosts(searchState.allPosts);
+  });
+
+  renderMessages();
+}
+
+$("#init").click(function() {
+  initApp();
+})
 
 $(".close").click(function () {
   $(".modal-form").trigger("reset");
-  $(".modal").removeClass("open");
-});
-
-$("#modal-button").on("click", async function (event) {
-  event.preventDefault();
-
-  const username = $("#username").val();
-  const password = $("#password").val();
-
-  if ($("#modal-button").text() === "Sign up") {
-    registerUser({ username, password });
-  } else {
-    loginUser({ username, password });
-  }
-
-  $("#log-form").trigger("reset");
-
+  $("#error-message").removeClass("active");
+  $("#error-message").text("");
   $(".modal").removeClass("open");
 });
 
@@ -88,11 +93,52 @@ function buildPost(post) {
 
     postBtn.append(MessageBtn);
 
-    MessageBtn.click(function () {
+    postBtn.find("#send-message").click(function () {
       $("#message-modal").addClass("open");
-      $("#to-who").text(`To: ${post.author.username}`);
 
-      submitMsg(post["_id"]);
+      const postEl = $(this).closest(".post");
+      const postData = postEl.data("post");
+      postId = postData["_id"];
+
+      $("#to-who").text(`To: ${postData.author.username}`);
+
+      $("#submit-message")
+        .off()
+        .click(async function (event) {
+          event.preventDefault();
+
+          const url = `${BASE_URL}${FIRST_PATH}${COHORT_NAME}/posts/${postId}/messages`;
+          const token = localStorage.getItem("token");
+          const msgContent = $("#message-content").val();
+
+          try {
+            const response = await fetch(url, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                message: {
+                  content: `${msgContent}`,
+                },
+              }),
+            });
+            const result = await response.json();
+
+            updateUserObj();
+
+            $("#message-form").trigger("reset");
+
+            $("#message-modal").removeClass("open");
+
+            postId = null;
+
+            return result;
+          } catch (error) {
+            console.error(error);
+          }
+        });
     });
   }
 
@@ -100,13 +146,14 @@ function buildPost(post) {
     const EditDeleteBtn = $(`      
       <button id="edit">Edit</button>
       <button id="delete">Delete</button>
+      <button id="view-message">Message</button>
     `);
     postBtn.append(EditDeleteBtn);
 
     postBtn.find("#delete").click(async function () {
       const postEl = $(this).closest(".post");
-      const post = postEl.data("post");
-      const postId = post["_id"];
+      const postData = postEl.data("post");
+      postId = postData["_id"];
       const url = `${BASE_URL}${FIRST_PATH}${COHORT_NAME}/posts/${postId}`;
       const token = localStorage.getItem("token");
 
@@ -123,6 +170,7 @@ function buildPost(post) {
 
         updateUserObj();
         postEl.slideUp();
+        postId = null;
 
         return result;
       } catch (error) {
@@ -130,32 +178,92 @@ function buildPost(post) {
       }
     });
   }
+
+  postBtn.find("#view-message").click(function () {
+    $("#view-message-modal").addClass("open");
+    $("#message-list").empty();
+
+    const postEl = $(this).closest(".post");
+    const postData = postEl.data("post");
+
+    if (postData.messages.length === 0) {
+      $("#message-list").text("No Message");
+      return;
+    }
+
+    postData.messages.forEach(function (msg) {
+      $("#message-list").append(buildMsg(msg));
+    });
+  });
+
+  postBtn.find("#edit").click(async function () {
+    const postEl = $(this).closest(".post");
+    const postData = postEl.data("post");
+    postId = postData["_id"];
+    $("#post-form").data({ postData, postEl });
+
+    $("#title").val(postData.title);
+    $("#description").val(postData.description);
+    $("#price").val(postData.price);
+    $("#location").val(postData.location);
+
+    postData.willDeliver
+      ? $("#willDeliver option[value=true]").prop("selected", true)
+      : $("#willDeliver option[value=false]").prop("selected", true);
+
+    // const updatedPostObj = {
+    //   title: $("title").val(),
+    //   description: $("#description").val(),
+    //   price: $("#price").val(),
+    //   location: $("#location").val(),
+    //   willDeliver: $("#willDeliver").val(),
+    // };
+    // const result = await patchPost(updatedPostObj);
+    // const resultEl = buildPost(result.data);
+    // console.log(resultEl)
+    // postEl.replaceWith(resultEl);
+
+    // $("#post-form").data({});
+    // $("#post-form").trigger("reset");
+  });
+
   postEl.append(postBtn);
 
   return postEl;
 }
 
-export function renderPosts() {
-  let posts = [];
+async function patchPost(postObj) {
+  const url = `${BASE_URL}${FIRST_PATH}${COHORT_NAME}/posts/${postId}`;
+  const token = localStorage.getItem("token");
 
-  getPosts().then(function (result) {
-    posts = result.data.posts;
-
-    $("#post-list").empty();
-
-    posts.forEach(function (post) {
-      $("#post-list").prepend(buildPost(post));
+  try {
+    const response = await fetch(url, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({post:postObj}),
     });
+
+    updateUserObj();
+    postId = null;
+
+    return response.json();
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+function renderPosts(posts) {
+  $("#post-list").empty();
+
+  posts.forEach(function (post) {
+    $("#post-list").prepend(buildPost(post));
   });
 }
 
-async function createPost({
-  title,
-  description,
-  price,
-  location,
-  willDeliver,
-}) {
+async function createPost(postObj) {
   const url = `${BASE_URL}${FIRST_PATH}${COHORT_NAME}/posts`;
   let token = null;
 
@@ -173,40 +281,50 @@ async function createPost({
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({
-        post: {
-          title,
-          description,
-          price,
-          location,
-          willDeliver,
-        },
-      }),
+      body: JSON.stringify({post: postObj}),
     });
-    const result = await response.json();
 
     updateUserObj();
 
-    $("#post-list").prepend(buildPost(result.data.post));
+    // $("#post-list").prepend(buildPost(result.data.post));
 
-    return result;
+    return response.json();
   } catch (error) {
     console.error(error);
   }
 }
 
-$("#submit-button").on("click", function (event) {
+$("#submit-button").on("click", async function (event) {
   event.preventDefault();
 
-  const title = $("#title").val();
-  const description = $("#description").val();
-  const price = $("#price").val();
-  const location = $("#location").val() ? $("#location").val() : "[On Request]";
-  const willDeliver = $("#willDeliver").val();
+  const { postData, postEl } = $("#post-form").data(); //patch
 
-  $("#post-form").trigger("reset");
+  const postObj = {
+    title: $("#title").val(),
+    description: $("#description").val(),
+    price: $("#price").val(),
+    location: $("#location").val() ? $("#location").val() : "[On Request]",
+    willDeliver: $("#willDeliver").val()
+  }
 
-  createPost({ title, description, price, location, willDeliver });
+  try { 
+    if (postData) { //patch
+      const result = await patchPost(postObj);
+
+      const resultEl = buildPost(result.data.post);
+      postEl.replaceWith(resultEl);
+
+      $("#post-form").data({postData: null, postEl: null});
+      $("#post-form").trigger("reset");
+    } else { //post
+      $("#post-form").trigger("reset");
+
+      const result = await createPost(postObj);
+      $("#post-list").prepend(buildPost(result.data.post));
+    }
+  } catch (error) {
+    console.error(error);
+  }
 });
 
 $("#message-tab").click(function () {
@@ -214,7 +332,7 @@ $("#message-tab").click(function () {
   $("#post-tab").addClass("not-selected");
   $("#message-tab").addClass("selected");
   $("#message-tab").removeClass("not-selected");
-  $("#message").removeClass("hidden");
+  $("#all-messages").removeClass("hidden");
   $("#post-form").addClass("hidden");
 });
 
@@ -224,43 +342,72 @@ $("#post-tab").click(function () {
   $("#post-tab").addClass("selected");
   $("#post-tab").removeClass("not-selected");
   $("#post-form").removeClass("hidden");
-  $("#message").addClass("hidden");
+  $("#all-messages").addClass("hidden");
 });
 
-function submitMsg(postId) {
-  $("#submit-message").on("click", async function (event) {
-    event.preventDefault();
-  
+function renderMessages() {
+  if (!isLoggedIn()) {
+    $("#all-messages").text("Log in is required!");
+    return;
+  }
+  $("#all-messages").empty();
 
-    const url = `${BASE_URL}${FIRST_PATH}${COHORT_NAME}/posts/${postId}/messages`;
-    const token = localStorage.getItem("token");
-    const msgContent = $("#message-content").val();
-  
-    try {
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type" : "application/json",
-          "Authorization" : `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          message: {
-            content: `${msgContent}`
-          }
-        })
-      });
-      const result = await response.json();
-
-      updateUserObj();
-
-      $("#message-form").trigger("reset");
-  
-      $("#message-modal").removeClass("open");
-  
-      return result;
-    } catch (error) {
-      console.error(error);
-    }
+  fetchMe(localStorage.getItem("token")).then(function (obj) {
+    obj.messages.forEach(function (msg) {
+      if (msg.fromUser.username !== localStorage.getItem("username")) {
+        $("#all-messages").append(buildMsg(msg));
+      }
+    });
   });
-  
 }
+
+function buildMsg(msg) {
+  const msgEl = $("<div class='message'>");
+
+  msgEl
+    .html(
+      `
+    <h4 class="message-header">From: ${msg.fromUser.username}</h5>
+    <p class="message-content">${msg.content}</p>
+  `
+    )
+    .data("message", msg);
+
+  return msgEl;
+}
+
+$("#search-form").on("submit", function (event) {
+  event.preventDefault();
+
+  searchState.searchTerm = $("#search").val();
+
+  const searchTerms = searchState.searchTerm.toLowerCase().split(" ");
+
+  if (!searchTerms) {
+    renderPosts(searchState.allPosts);
+    return;
+  }
+
+  let filteredPosts = [];
+
+  searchTerms.forEach(function (term) {
+    searchState.allPosts.forEach(function (post) {
+      if (
+        post.title.toLowerCase().includes(term) ||
+        post.description.toLowerCase().includes(term) ||
+        post.author.username.toLowerCase().includes(term) ||
+        post.price.toLowerCase().includes(term) ||
+        post.location.toLowerCase().includes(term)
+      ) {
+        filteredPosts.push(post);
+      }
+    });
+  });
+
+  if (filteredPosts.length === 0) {
+    alert("No result");
+    initApp();
+    return;
+  }
+  renderPosts(filteredPosts);
+});

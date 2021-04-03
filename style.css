@@ -28,13 +28,14 @@ header {
   margin-left: 30px;
   border: none;
   outline: none;
-  /* padding: 16px; */
 }
 #header-button button:hover {
-  /* background-color: seagreen; */
   color: gray;
 }
-
+#init {
+  text-decoration: none;
+  color: whitesmoke;
+}
 
 #app {
   display: flex;
@@ -58,7 +59,7 @@ main {
   flex-grow: 1;
   padding: 12px;
   border: none;
-  outline:none;
+  outline: none;
   background-color: whitesmoke;
   border-bottom: 2px solid seagreen;
 }
@@ -103,6 +104,10 @@ main {
   margin-bottom: 0;
   margin-top: 18px;
 }
+.post:hover {
+  box-shadow: 2px 2px 13px -5px gray;
+  transform: translate(-4px, -4px);
+}
 .created {
   font-size: 12px;
 }
@@ -122,11 +127,10 @@ main {
   max-height: 70px;
 }
 #post-buttons {
-position: absolute;
-bottom: 18px;
-right: 18px;
+  position: absolute;
+  bottom: 18px;
+  right: 18px;
 }
-
 
 aside {
   flex: 0 0 400px;
@@ -163,7 +167,7 @@ aside {
 #post-form label {
   margin-bottom: 4px;
 }
-#post-form input, 
+#post-form input,
 #post-form textarea {
   margin-bottom: 18px;
   padding: 6px;
@@ -172,9 +176,9 @@ aside {
   margin-bottom: 48px;
   padding: 6px;
 }
-#submit-button{
+#submit-button {
   padding: 6px;
-  background-color:seagreen;
+  background-color: seagreen;
   color: white;
   font-size: 24px;
 }
@@ -189,12 +193,23 @@ aside {
   background-color: lightseagreen;
   border-bottom-right-radius: 6px;
   border-bottom-left-radius: 6px;
-  border-top-right-radius: 6px;  
-  height: 50vh;   
-  min-height: 520px;                             
+  border-top-right-radius: 6px;
+  height: 50vh;
+  min-height: 520px;
 }
-#message {
+#all-messages {
   overflow-y: auto;
+  padding: 12px;
+}
+.message {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+
+  margin-bottom: 18px;
+}
+.message-header {
+  margin-bottom: 6px;
 }
 
 .modal:not(.open) {
@@ -227,7 +242,7 @@ aside {
   font-size: 24px;
   color: seagreen;
 }
-#log-modal-header{
+#log-modal-header {
   margin-bottom: 6px;
 }
 #message-modal-header {
@@ -249,6 +264,9 @@ aside {
   margin-top: 30px;
   font-size: 22px;
   padding: 8px;
+
+  background-color: seagreen;
+  color: white;
 }
 #message-content {
   background: #ddd;
@@ -260,16 +278,29 @@ aside {
   font-size: 20px;
 }
 #error-message {
- /* background-color: red; */
+  background-color: rgb(236, 138, 138);
+  padding: 12px;
+  margin-top: 12px;
+  border-radius: 6px;
+}
+#error-message:not(.active) {
+  display: none;
+}
+#message-list {
+  overflow-y: auto;
+  height: 400px;
+}
+#modal-button:hover,
+#submit-message:hover {
+  background-color: gray;
 }
 
 .close {
   font-size: 36px;
 }
 .close:hover {
-  color: red;
+  color: gray;
 }
 
 @media (max-width: 768px) {
-
 }

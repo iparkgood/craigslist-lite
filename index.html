@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Stranger's things</title>
+    <title>Craigslist-Lite</title>
     <link rel="stylesheet" href="style.css" />
     <link
       href="https://fonts.googleapis.com/css?family=Material+Icons|IM+Fell+Great+Primer+SC|Dosis|Open+Sans+Condensed:300&display=swap"
@@ -15,11 +15,8 @@
   </head>
   <body>
     <header>
-      <h1>Stranger's things</h1>
+      <h1><a href="#" id="init">Craigslist-Lite</a></h1>
       <div id="header-button">
-        <!-- <a href="#" id="log-in">LOG IN</a> -->
-        <!-- <a href="#" id="log-out">LOG OUT</a> -->
-        <!-- <a href="#" id="sign-up">SIGN UP</a> -->
       </div>
     </header>
     <div id="app">
@@ -51,7 +48,7 @@
           </select>
           <button id="submit-button">Submit</button>
         </form>
-        <div id="message" class="tab-content hidden"></div>
+        <div id="all-messages" class="tab-content hidden"></div>
       </aside>
       <div id="log-modal" class="modal">
         <div class="modal-content">
@@ -75,12 +72,20 @@
             <h3 class="modal-title">Message</h3>
             <span class="close">&times;</span>
           </div>
-          <div id="to-who">
-          </div>
+          <div id="to-who"></div>
           <form id="message-form" class="modal-form">
             <textarea id="message-content" rows="10" required></textarea>
             <button id="submit-message">Send</button>
           </form>
+        </div>
+      </div>
+      <div id="view-message-modal" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3 class="modal-title">View Message</h3>
+            <span class="close">&times;</span>
+          </div>
+          <div id="message-list"></div>
         </div>
       </div>
     </div>
