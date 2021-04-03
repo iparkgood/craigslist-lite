@@ -1,6 +1,6 @@
 import { BASE_URL, FIRST_PATH, COHORT_NAME, initApp } from "./app.js";
 
-export async function registerUser({ username, password }) {
+async function registerUser({ username, password }) {
   const url = `${BASE_URL}${FIRST_PATH}${COHORT_NAME}/users/register`;
 
   try {
@@ -41,7 +41,7 @@ export async function registerUser({ username, password }) {
   }
 }
 
-export async function loginUser({ username, password }) {
+async function loginUser({ username, password }) {
   const url = `${BASE_URL}${FIRST_PATH}${COHORT_NAME}/users/login`;
 
   try {
@@ -95,13 +95,13 @@ export function isLoggedIn() {
 export function renderLogInOutBtn() {
   $("#header-button").empty();
 
-  if (isLoggedIn()) {
+  if (isLoggedIn()) { //when log in, create a log-out button
     const btnEl = `<button id="log-out">LOG OUT</button>`;
     $("#header-button").append(btnEl);
 
     $("#header-button")
       .find("#log-out")
-      .click(function () {
+      .click(function () { //when the log-out button is clicked
         localStorage.removeItem("token");
         localStorage.removeItem("username");
 
@@ -112,52 +112,56 @@ export function renderLogInOutBtn() {
 
         initApp();
       });
-  } else if (!isLoggedIn()) {
+  } else if (!isLoggedIn()) { //when log out, create log-in and sign-up buttons
     const btnEl = `<button id="log-in">LOG IN</button><button id="sign-up">SIGN UP</button>`;
     $("#header-button").append(btnEl);
 
-    $("#log-in").click(function () {
+    $("#log-in").click(function () { //when the log-in button is clicked
       $("#log-modal-title").text("Log in");
       $("#log-modal").addClass("open");
       $("#modal-button").text("Log in");
 
-      $("#modal-button").off().on("click", async function (event) {
-        event.preventDefault();
+      $("#modal-button")
+        .off()
+        .on("click", async function (event) { //log in
+          event.preventDefault();
 
-        const username = $("#username").val();
-        const password = $("#password").val();
-        let result = true;
+          const username = $("#username").val();
+          const password = $("#password").val();
+          let result = true;
 
-        result = await loginUser({ username, password });
+          result = await loginUser({ username, password });
 
-        $("#log-form").trigger("reset");
+          $("#log-form").trigger("reset");
 
-        if (result) {
-          $(".modal").removeClass("open");
-        }
-      });
+          if (result) {
+            $(".modal").removeClass("open"); 
+          }
+        });
     });
 
-    $("#sign-up").click(function () {
+    $("#sign-up").click(function () { //when the sign-up button is clicked
       $("#log-modal-title").text("Sign up");
       $("#log-modal").addClass("open");
       $("#modal-button").text("Sign up");
 
-      $("#modal-button").off().on("click", async function (event) {
-        event.preventDefault();
+      $("#modal-button")
+        .off()
+        .on("click", async function (event) { //sign up
+          event.preventDefault();
 
-        const username = $("#username").val();
-        const password = $("#password").val();
-        let result = true;
+          const username = $("#username").val();
+          const password = $("#password").val();
+          let result = true;
 
-        result = await registerUser({ username, password });
+          result = await registerUser({ username, password });
 
-        $("#log-form").trigger("reset");
+          $("#log-form").trigger("reset");
 
-        if (result) {
-          $(".modal").removeClass("open");
-        }
-      });
+          if (result) {
+            $(".modal").removeClass("open");
+          }
+        });
     });
   }
 }
@@ -187,6 +191,5 @@ export function updateUserObj() {
       window.authState.currentUserObj = obj;
     });
   }
-
   return null;
 }
