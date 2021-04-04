@@ -1,4 +1,4 @@
-import {BASE_URL, FIRST_PATH, COHORT_NAME} from "./app.js"
+import { BASE_URL, FIRST_PATH, COHORT_NAME, initApp } from "./app.js";
 import { updateUserObj, isLoggedIn } from "./auth.js";
 import { buildMsg } from "./message.js";
 
@@ -27,7 +27,6 @@ export async function getPosts() {
 }
 
 function buildPost(post) {
-
   const postEl = $("<div class='post'>");
 
   postEl
@@ -46,11 +45,13 @@ function buildPost(post) {
 
   const postBtn = $(`<p id="post-buttons">`);
 
+  //append a message button to send a message in posts that a user is not an author of the post
   if (isLoggedIn() && !post.isAuthor) {
     const MessageBtn = $(`<button id="send-message">Message</button>`);
 
     postBtn.append(MessageBtn);
 
+    //open modal window to display message input form.
     postBtn.find("#send-message").click(function () {
       $("#message-modal").addClass("open");
 
@@ -60,6 +61,8 @@ function buildPost(post) {
 
       $("#to-who").text(`To: ${postData.author.username}`);
 
+      //send a message
+      //I have to add off() because a message was sent multiple times with one click.
       $("#submit-message")
         .off()
         .click(async function (event) {
@@ -100,15 +103,17 @@ function buildPost(post) {
     });
   }
 
+  //append edit/delete/message(to view received messages) in posts that a user is an author of the post
   if (post.isAuthor) {
-                                            
     const EditDeleteBtn = $(`      
         <button id="edit">Edit</button>
         <button id="delete">Delete</button>
         <button id="view-message">Message</button>
       `);
+
     postBtn.append(EditDeleteBtn);
 
+    //click the delete button to delete a post.
     postBtn.find("#delete").click(async function () {
       const postEl = $(this).closest(".post");
       const postData = postEl.data("post");
@@ -138,6 +143,7 @@ function buildPost(post) {
     });
   }
 
+  //click the message button to view received messages
   postBtn.find("#view-message").click(function () {
     $("#view-message-modal").addClass("open");
     $("#message-list").empty();
@@ -149,13 +155,14 @@ function buildPost(post) {
       $("#message-list").text("No Message");
       return;
     }
-// console.log("show postData", postData);
+
     postData.messages.forEach(function (msg) {
       $("#message-list").append(buildMsg(msg));
     });
   });
 
-  postBtn.find("#edit").click(async function () {
+  //click the edit button to re-fill the create-post form inputs.
+  postBtn.find("#edit").click(function () {
     const postEl = $(this).closest(".post");
     const postData = postEl.data("post");
     postId = postData["_id"];
@@ -236,10 +243,11 @@ async function createPost(postObj) {
   }
 }
 
+//click the submit button in the create-post form
 $("#submit-button").on("click", async function (event) {
   event.preventDefault();
 
-  const { postData, postEl } = $("#post-form").data(); //patch
+  const { postData, postEl } = $("#post-form").data();
 
   const postObj = {
     title: $("#title").val(),
@@ -251,7 +259,7 @@ $("#submit-button").on("click", async function (event) {
 
   try {
     if (postData) {
-      //patch
+      //update a post
       const result = await patchPost(postObj);
 
       const resultEl = buildPost(result.data.post);
@@ -260,12 +268,17 @@ $("#submit-button").on("click", async function (event) {
 
       $("#post-form").data({ postData: null, postEl: null });
       $("#post-form").trigger("reset");
+      /*
+        After editing a post, all recieved messages are not displayed, because the message array in the return object of the patchPost()
+        only offers each message's id for some reason. But, after refreshing the page, a user is able to see all received messages again. 
+      */
+     initApp(); //for the reason I mention above I added initApp() here.
     } else {
-      //post
+      //create a post
       $("#post-form").trigger("reset");
 
       const result = await createPost(postObj);
- 
+
       $("#post-list").prepend(buildPost(result.data.post));
     }
   } catch (error) {

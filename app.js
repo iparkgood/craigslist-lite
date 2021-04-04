@@ -13,7 +13,7 @@ window.authState = {
   currentError: null,
 };
 
-export let searchState = {
+let searchState = {
   allPosts: [],
   searchTerm: "",
 };

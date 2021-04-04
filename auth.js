@@ -188,7 +188,7 @@ export async function fetchMe(token) {
 
     return result.data;
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 }
 
