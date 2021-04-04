@@ -95,13 +95,15 @@ export function isLoggedIn() {
 export function renderLogInOutBtn() {
   $("#header-button").empty();
 
-  if (isLoggedIn()) { //when log in, create a log-out button
+  if (isLoggedIn()) {
+    //when log in, create a log-out button
     const btnEl = `<button id="log-out">LOG OUT</button>`;
     $("#header-button").append(btnEl);
 
     $("#header-button")
       .find("#log-out")
-      .click(function () { //when the log-out button is clicked
+      .click(function () {
+        //when the log-out button is clicked
         localStorage.removeItem("token");
         localStorage.removeItem("username");
 
@@ -112,18 +114,21 @@ export function renderLogInOutBtn() {
 
         initApp();
       });
-  } else if (!isLoggedIn()) { //when log out, create log-in and sign-up buttons
+  } else if (!isLoggedIn()) {
+    //when log out, create log-in and sign-up buttons
     const btnEl = `<button id="log-in">LOG IN</button><button id="sign-up">SIGN UP</button>`;
     $("#header-button").append(btnEl);
 
-    $("#log-in").click(function () { //when the log-in button is clicked
+    $("#log-in").click(function () {
+      //when the log-in button is clicked
       $("#log-modal-title").text("Log in");
       $("#log-modal").addClass("open");
       $("#modal-button").text("Log in");
 
       $("#modal-button")
         .off()
-        .on("click", async function (event) { //log in
+        .on("click", async function (event) {
+          //log in
           event.preventDefault();
 
           const username = $("#username").val();
@@ -135,19 +140,21 @@ export function renderLogInOutBtn() {
           $("#log-form").trigger("reset");
 
           if (result) {
-            $(".modal").removeClass("open"); 
+            $(".modal").removeClass("open");
           }
         });
     });
 
-    $("#sign-up").click(function () { //when the sign-up button is clicked
+    $("#sign-up").click(function () {
+      //when the sign-up button is clicked
       $("#log-modal-title").text("Sign up");
       $("#log-modal").addClass("open");
       $("#modal-button").text("Sign up");
 
       $("#modal-button")
         .off()
-        .on("click", async function (event) { //sign up
+        .on("click", async function (event) {
+          //sign up
           event.preventDefault();
 
           const username = $("#username").val();

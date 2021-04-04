@@ -36,6 +36,9 @@ header {
   text-decoration: none;
   color: whitesmoke;
 }
+#init a:hover {
+  cursor: pointer;
+}
 
 #app {
   display: flex;
