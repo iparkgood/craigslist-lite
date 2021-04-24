@@ -133,9 +133,8 @@ export function renderLogInOutBtn() {
 
           const username = $("#username").val();
           const password = $("#password").val();
-          let result = true;
 
-          result = await loginUser({ username, password });
+          const result = await loginUser({ username, password });
 
           $("#log-form").trigger("reset");
 
@@ -159,9 +158,8 @@ export function renderLogInOutBtn() {
 
           const username = $("#username").val();
           const password = $("#password").val();
-          let result = true;
 
-          result = await registerUser({ username, password });
+          const result = await registerUser({ username, password });
 
           $("#log-form").trigger("reset");
 
